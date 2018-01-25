@@ -9,18 +9,19 @@
 
 
 
-struct file_control_block {
+struct meta_file_struct {
     char *filename;            /* we'll use this field as the key */
     int uid;
     int gid;
     int *mode;
     int size;
+    void *listofblocks;
     //char* atime;
     //char* mtime;           
     UT_hash_handle hh; /* makes this structure hashable */
 };
 
-struct file_control_block *meta_files = NULL;
+struct meta_file_struct *inode_list = NULL;
 
 
 
@@ -57,8 +58,9 @@ char* read_block(int block_num);
 void clear_all();
 
 void initialize_superblock();
-void initialize_file_meta(struct file_control_block *);
+void write_file_meta(struct meta_file_struct *, char*);
 void initialize_freeblocklist();
+struct meta_file_struct* read_meta(char*);
 
 
 char **mem_disk; //in memory buffer (simulates disk)
@@ -69,14 +71,20 @@ void main()
     printf("Initializing mem_disk..\n");
     printf("Block Size = %d\nNumber of blocks=%d\n", BLOCK_SIZE, NUMBER_OF_BLOCKS); 
     initialize_mem_disk();
-    printf("Initializing superblock..\n");
-    initialize_superblock();
+    
     printf("Initializing file_meta..\n");
-    struct file_control_block *new_meta= malloc(sizeof(struct file_control_block));
-    initialize_file_meta(new_meta);
+    struct meta_file_struct *new_meta= malloc(sizeof(struct meta_file_struct));
+ 
+    write_file_meta(new_meta, "FILE1");
+   
+    struct meta_file_struct *t =  read_meta("FILE1");
+   
+
+    //printf("Filename = %s\n",  t->filename);
     printf("Initializing free_block_list..\n");
     initialize_freeblocklist();
-
+    printf("Initializing superblock..\n");
+    initialize_superblock();
     //write_block("AAAA",5);
     //write_block("AAAAwwww",908);
     //char *x = read_block(3);
@@ -142,15 +150,18 @@ void initialize_superblock()
     m_superblock->root_dir= malloc(20*sizeof(char));
     m_superblock->partition_size= NUMBER_OF_BLOCKS*BLOCK_SIZE;
     m_superblock->block_size= BLOCK_SIZE;
-    m_superblock->free_block_list=NULL;
+    m_superblock->free_block_list=first;
 
 }
 
-void initialize_file_meta(struct file_control_block *new_meta)
+void write_file_meta(struct meta_file_struct *new_meta, char *fname) //write meta
 {
     new_meta->filename=malloc(20*sizeof(char));
+    new_meta->listofblocks=NULL;
+    strcpy(new_meta->filename, fname);
     new_meta->uid=1000;
     new_meta->gid=1000;
+    new_meta->listofblocks=NULL;
     //new_meta->atime=NULL;
     //new_meta->mtime=NULL;
     new_meta->size=0;
@@ -162,9 +173,23 @@ void initialize_file_meta(struct file_control_block *new_meta)
     
 
 
-    HASH_ADD_INT( meta_files, filename, new_meta );    
+    HASH_ADD_STR( inode_list, filename, new_meta );   
+    //printf ("%s inserted\n", new_meta->filename);
 
 }
+
+struct meta_file_struct* read_meta(char* filename_tr) //filename to read
+{
+    //printf("in read_meta found %s\n", filename_tr);
+    struct meta_file_struct *foundmeta;
+    HASH_FIND_STR( inode_list, filename_tr, foundmeta );  
+  
+    
+    return foundmeta;
+}
+
+
+
 
 snode* create_node(int val)
 {
@@ -243,7 +268,11 @@ void initialize_freeblocklist()
     {
         insert_free_block_number(i);
     }
-    display_free_block_list();
+    //display_free_block_list();
 }
 
+void listofblocks_for_meta(struct meta_file_struct *xmeta)
+{
+    //TODO
 
+}
