@@ -48,7 +48,7 @@ static int getattr_callback(const char *path, struct stat *stbuf) {
     stbuf->st_nlink = 1;
     stbuf->st_uid = t->uid;
     stbuf->st_gid = t->gid;
-    stbuf->st_size = 1024;
+    stbuf->st_size = t->size;
     return 0;
  
 }

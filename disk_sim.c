@@ -1,6 +1,10 @@
 
 #include "disk_sim.h"
 
+// usage 
+// gcc -w disk_sim.c nifs.c -o ssfs `pkg-config fuse --cflags --libs`
+//  ./ssfs -f niki
+
 struct meta_file_struct *inode_list = NULL;
 struct superblock * m_superblock;
 
@@ -20,21 +24,21 @@ void mknikfs(char *root)
     printf("Block Size = %d\nNumber of blocks=%d\n", BLOCK_SIZE, NUMBER_OF_BLOCKS); 
     initialize_mem_disk();
     
-    printf("Initializing root directory meta..\n");
+    //printf("Initializing root directory meta..\n");
     //struct meta_file_struct *new_meta= malloc(sizeof(struct meta_file_struct));
     //write_file_meta(new_meta, root, return_free_block_number(),0,0 );
    
     printf("Initializing free_block_list..\n");
     initialize_freeblocklist();
     printf("Initializing superblock..\n");
-    initialize_superblock();
+    initialize_superblock(root);
     printf("creating root dir..\n");
     create_dir(root);
     struct meta_file_struct *t =  read_meta(root);
     printf("Filename = %s\n",  t->filename);
-    create_file("/File1");
-    create_file("/File2");
-    create_file("/File3");
+    create_file("/File1","This is File1, in root directory\n",root);
+    create_file("/File2","This is File2, also in root.\n",root);
+    create_file("/File3","This is File3\n",root);
 
     //dirinfo = read_dir(root);
     //printf("Directory disksimmm2 has %s\n",dirinfo);
@@ -94,15 +98,18 @@ void clear_all()
     free(mem_disk);
 }
 
-void initialize_superblock()
+void initialize_superblock(char *root)
 {
     m_superblock = (struct superblock *)malloc(sizeof(struct superblock));
     m_superblock->root_dir= malloc(20*sizeof(char));
+    strcpy(m_superblock->root_dir,root);
     m_superblock->partition_size= NUMBER_OF_BLOCKS*BLOCK_SIZE;
     m_superblock->block_size= BLOCK_SIZE;
     m_superblock->free_block_list=first;
 
 }
+
+
 
 void write_file_meta(struct meta_file_struct *new_meta, char *fname, int blockloc, int sizefile, int flagg) //write meta
 {
@@ -226,20 +233,23 @@ void listofblocks_for_meta(struct meta_file_struct *xmeta)
 
 }
 
-void create_file(char *filename)
+void create_file(char *filename, char* text, char* dir)
 {
     int x = return_free_block_number();
     
     
-    char* text = "FILEEEE HEREE";
+
   
     struct meta_file_struct *new_meta= malloc(sizeof(struct meta_file_struct));
     char *filetxt = malloc(strlen(text) + 1);
     strcpy(filetxt,text);
     int flag= 1; //file
-    write_file_meta(new_meta,filename,x,strlen(text),flag);
+    int textlen = strlen(text);
+
+    write_file_meta(new_meta,filename,x,(textlen*4),flag);
     write_block(filetxt,x);
-    app_dir("niki",filename);
+  //  printf("Root name = %s\n", m_superblock->root_dir);
+    app_dir(dir,filename);
     printf("Created file %s\n", filename);
 
 }

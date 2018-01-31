@@ -50,10 +50,10 @@ int write_block(char *write_data, int block_num);
 char* read_block(int block_num);
 void clear_all();
 
-void create_file(char*);
+void create_file(char*, char*, char*);
 char*  read_file(char *filename);
 
-void initialize_superblock();
+void initialize_superblock(char *);
 void write_file_meta(struct meta_file_struct *, char*, int,int,int);
 void initialize_freeblocklist();
 struct meta_file_struct* read_meta(char*);
@@ -63,6 +63,7 @@ void app_dir(char* dname, char* filename);
 
 char* read_dir(char* name);
 
+extern struct superblock * m_superblock;
 
 char **mem_disk; //in memory buffer (simulates disk)
 char **inode_info;
